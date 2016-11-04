@@ -34,7 +34,7 @@ public class SimpleServer
             Socket clientSocket = serverSocket.accept();
             (new SimpleConnectionHandler(clientSocket)).start();
         }
-
+// add simpleconnectionHandler
         serverSocket.close();
     }
 }
