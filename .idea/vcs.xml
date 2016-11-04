@@ -2,6 +2,9 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
+<<<<<<< HEAD
     <mapping directory="C:\Users\Default Cute\Downloads\ID2212-master\ID2212\HW1\ID2212" vcs="Git" />
+=======
+>>>>>>> 2889cb8bd8a95f9b4a7133c2d4abec29438481c1
   </component>
 </project>
