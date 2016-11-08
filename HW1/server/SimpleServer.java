@@ -1,11 +1,4 @@
 
-/*
-1.Open a socket. 
-2.Open an input stream and output stream to the socket. 
-3.Read from and write to the stream according to the server's protocol. 
-4.Close the streams. 
-5.Close the socket.
- */
 
 import java.io.IOException;
 import java.net.ServerSocket;

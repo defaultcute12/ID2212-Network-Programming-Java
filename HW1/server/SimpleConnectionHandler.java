@@ -1,12 +1,12 @@
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.ObjectOutputStream;
 import java.net.Socket;
 
-/*
- * TODO: Update this class to run with Hangman
- */
+
 
 public class SimpleConnectionHandler implements Runnable
 {
@@ -35,21 +35,30 @@ public class SimpleConnectionHandler implements Runnable
 		
 		try
 		{
-			byte[] msg = new byte[4096];
-			int bytesRead = 0;
-			int n;
+			ObjectOutputStream oos = new ObjectOutputStream(clientSocket.getOutputStream());
+			BufferedReader br = new InputStreamReader(clientSocket.getInputStream());
 			
-			while ((n = in.read(msg, bytesRead, 256)) != -1)
+			Hangman game = new Hangman();
+			
+			String request;
+			GameState gs;
+			
+			while (true)										// Wait for player action
 			{
-				bytesRead += n;
-				if (bytesRead == 4096)		break;
-				if (in.available() == 0)	break;
+				request = br.readLine());						// read the player request
+				
+				switch(request.length())
+				{
+				case 0: 	gs = game.newGame();				// request is empty: start new game
+							break;
+				case 1: 	gs = game.guess(request.charAt(0));	// request is 1 char: make guess
+							break;
+				default:	gs = game.guess(request);			// request is full word: make guess
+							break;
+				}
+				oos.writeObject(gs);							// return back to player the GameState
+				oos.flush();
 			}
-
-			for (int i = bytesRead; i > 0; i--) out.write(msg[i-1]);
-			
-			out.flush();
-
 		}
 		catch (IOException e)
 		{
