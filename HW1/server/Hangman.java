@@ -21,6 +21,7 @@ public class Hangman {
 	public Hangman()
 	{
 		score = 0;
+                System.out.println("Hey");
 	}
 	
 	/*
