@@ -1,9 +1,10 @@
-package se.coada.id2212.hw1;
+package se.coada.id2212.hw1.server;
 
 import java.io.BufferedReader;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.Arrays;
 
 
@@ -14,14 +15,14 @@ public class Hangman {
 	private final int WONGAME = -1;
 	
 	private int remainingGuesses;
-	private int score;
+	private int scorePoints;
 	private char[] obfuscatedWord;
 	private String cleanWord;
 	
 	public Hangman()
 	{
-		score = 0;
-                System.out.println("Hey");
+		scorePoints = 0;
+		remainingGuesses = 0;
 	}
 	
 	/*
@@ -38,7 +39,7 @@ public class Hangman {
 			for (int i = 0; i < 10; i++)									// Read random number of lines
 			{
 				if ( (tempWord = br.readLine()) == null) break;				// EOF
-				word = tempWord;										// Assign new word to cleanWord
+				word = tempWord;											// Assign new word to cleanWord
 			}
 			br.close();
 		}
@@ -58,13 +59,13 @@ public class Hangman {
 		
 		cleanWord = getWord();							// generate a new word
 						
-		cleanWord = cleanWord.toLowerCase();			// make sure word is lowercase
+		cleanWord = cleanWord.toUpperCase();			// make sure word is uppercase
 		
 		// obfuscate word returned to player
 		obfuscatedWord = new char[cleanWord.length()];
 		Arrays.fill(obfuscatedWord, '-');
 		
-		return new GameState();
+		return state();
 	}
 	
 	public GameState guess(char c)
@@ -72,7 +73,7 @@ public class Hangman {
 		if (remainingGuesses > 0)
 		{
 			int firstIndex;
-			c = Character.toLowerCase(c);
+			c = Character.toUpperCase(c);
 						
 			if ( (firstIndex = cleanWord.indexOf(c)) != -1)					// if word contains char
 			{
@@ -83,7 +84,7 @@ public class Hangman {
 						if (obfuscatedWord[i] == c)							// this char in obf. has already been revealed
 						{
 							badGuess();										// consider this char guess as bad
-							return new GameState();
+							return state();
 						}
 						obfuscatedWord[i] = c;								// reveal the char
 					}
@@ -92,18 +93,18 @@ public class Hangman {
 			}
 			else badGuess();
 		}
-		return new GameState();
+		return state();
 	}
 	
 	public GameState guess(String w)
 	{
 		if (remainingGuesses > 0)
 		{
-			w = w.toLowerCase();
+			w = w.toUpperCase();
 			if (w.equals(cleanWord)) victory();
 			else badGuess();
 		}
-		return new GameState();
+		return state();
 	}
 	
 	private void badGuess()
@@ -114,23 +115,30 @@ public class Hangman {
 	
 	private void victory()
 	{
-		score++;
+		scorePoints++;
 		obfuscatedWord = ("Congratulations! You guessed " + cleanWord).toCharArray();
 		remainingGuesses = WONGAME;
 	}
 	
-	// The game state object, to be returned to the player
-	public class GameState
+	private GameState state()
 	{
-		public final int remainingGuesses;
-		public final String obfuscatedWord;
+		return new GameState(remainingGuesses, scorePoints, obfuscatedWord);
+	}
+	
+	// The game state object, to be returned to the player
+	public static class GameState implements Serializable
+	{
+		public final int guesses;
+		public final String word;
 		public final int score;
 		
-		public GameState()
+		public GameState(int remainingGuesses, int scorePoints, char[] obfuscatedWord)
 		{
-			this.remainingGuesses = Hangman.this.remainingGuesses;
-			this.obfuscatedWord = new String(Hangman.this.obfuscatedWord);
-			this.score = Hangman.this.score;
+			guesses = remainingGuesses;
+			score = scorePoints;
+			
+			if (obfuscatedWord == null) word = "";
+			else word = new String(obfuscatedWord);
 		}
 	}
 	

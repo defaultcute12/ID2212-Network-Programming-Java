@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<?import javafx.scene.shape.*?>
+<?import javafx.scene.text.*?>
+<?import javafx.geometry.*?>
+<?import java.lang.*?>
+<?import java.util.*?>
+<?import javafx.scene.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+
+<GridPane maxHeight="-Infinity" maxWidth="-Infinity" minHeight="-Infinity" minWidth="-Infinity" prefHeight="200.0" prefWidth="440.0" vgap="10.0" xmlns="http://javafx.com/javafx/8" xmlns:fx="http://javafx.com/fxml/1" fx:controller="se.coada.id2212.hw1.client.Network">
+  <columnConstraints>
+    <ColumnConstraints hgrow="SOMETIMES" minWidth="10.0" prefWidth="100.0" />
+  </columnConstraints>
+  <rowConstraints>
+    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+    <RowConstraints minHeight="10.0" prefHeight="30.0" vgrow="SOMETIMES" />
+  </rowConstraints>
+   <children>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0" style=" -fx-border-color:black; -fx-border-width: 1; -fx-border-style: solid;" GridPane.rowIndex="0">
+         <children>
+			<Text text="H A N G M A N" fx:id="wordText" strokeType="OUTSIDE" strokeWidth="0.0" />
+         </children>
+      </HBox>
+      <HBox alignment="CENTER" prefHeight="100.0" prefWidth="200.0" spacing="10.0" style=" -fx-border-color:black; -fx-border-width: 1; -fx-border-style: solid;" GridPane.rowIndex="1">
+         <children>
+            <Label fx:id="scoreLabel" text="Score: 0" />
+            <TextField fx:id="sendField" disable="true" prefWidth="100.0" alignment="CENTER" />
+            <Button fx:id="sendButton" disable="true" mnemonicParsing="false" onAction="#sendHandler" text="Guess (?)" />
+            <Button fx:id="newGameButton" disable="true" mnemonicParsing="false" onAction="#newGameHandler" text="New Game" />
+         </children>
+      </HBox>
+      <HBox alignment="CENTER" prefHeight="117.0" prefWidth="499.0" spacing="10.0" style=" -fx-border-color:black; -fx-border-width: 1; -fx-border-style: solid;" GridPane.rowIndex="2">
+         <children>
+            <Text text="Connecting..." fx:id="guessedText" />
+         </children>
+      </HBox>
+   </children>
+   <padding>
+      <Insets bottom="25.0" left="25.0" right="25.0" top="25.0" />
+   </padding>
+</GridPane>
