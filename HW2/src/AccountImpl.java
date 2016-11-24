@@ -17,6 +17,11 @@ public class AccountImpl extends UnicastRemoteObject implements Account
 		this.name = name;
 	}
 	
+	public String getName()
+	{
+		return name;
+	}
+	
 	@Override
 	public synchronized void deposit(float value) throws RemoteException, RejectedException
 	{

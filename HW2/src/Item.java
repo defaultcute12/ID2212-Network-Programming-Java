@@ -7,7 +7,7 @@ public class Item implements Serializable
 	public final int ID;
 	public final String name;
 	public final float price;
-	public Account seller;
+	public Client seller;
 	
 	private static int idFactory = 1;
 	
@@ -16,10 +16,9 @@ public class Item implements Serializable
 		this.ID = idFactory++;
 		this.name = name;
 		this.price = price;
-		this.seller = seller;
 	}
 	
-	public void updateSeller(Account seller)
+	public void updateSeller(Client seller)
 	{
 		this.seller = seller;
 	}

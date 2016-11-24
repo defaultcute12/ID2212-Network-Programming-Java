@@ -9,4 +9,6 @@ public interface Account extends Remote
 	public void deposit(float value) throws RemoteException, RejectedException;
 	
 	public void withdraw(float value) throws RemoteException, RejectedException;
+	
+	public String getName() throws RemoteException;
 }
