@@ -69,7 +69,10 @@ public class ClientImpl extends UnicastRemoteObject implements Client
 		if (account == null)
 		{
 			try {
-				System.out.print("Welcome " + clientName + " to " + bankName + "! Create new account> ");
+				System.out.print("Welcome to " + bankName + "! What's your name?> ");
+				clientName = consoleIn.readLine();
+				
+				System.out.print("Create new account> ");
 				String userInput = "newAccount " + consoleIn.readLine();
 				execute(parse(userInput));
 			} catch (IOException e) {
@@ -238,6 +241,10 @@ public class ClientImpl extends UnicastRemoteObject implements Client
 			System.out.println(account);
 			break;
 		case deposit:
+			if (command.getAmount() == 0)
+			{
+				account.deposit(Float.parseFloat(command.getName()));
+			}
 			account.deposit(command.getAmount());
 			break;
 		case withdraw:
