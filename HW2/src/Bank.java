@@ -4,6 +4,8 @@ import java.rmi.RemoteException;
 
 public interface Bank extends Remote
 {
+	public static final String DEFAULT_BANK_NAME = "Nordea";
+
 	public Account newAccount(String name) throws RemoteException, RejectedException;
 	
 	public Account getAccount(String name) throws RemoteException;
