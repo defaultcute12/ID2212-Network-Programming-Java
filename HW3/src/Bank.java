@@ -4,7 +4,7 @@ import java.rmi.RemoteException;
 
 public interface Bank extends Remote
 {
-	public static final String DEFAULT_NAME = "RMI Bank";
+	public static final String DEFAULT_NAME = "RMI-Bank";
 
 	public Account newAccount(String name) throws RemoteException, RejectedException;
 	

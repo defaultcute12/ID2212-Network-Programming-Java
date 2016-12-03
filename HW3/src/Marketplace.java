@@ -1,13 +1,12 @@
 import java.rmi.Remote;
 import java.rmi.RemoteException;
-import java.util.Map;
 
 
 public interface Marketplace extends Remote
 {
-	public static final String DEFAULT_NAME = "RMI Marketplace";
-	public static final int DEFAULT_PORT = 2212;
-	public static final String DEFAULT_DB = "marketDB";
+	public static final String DEFAULT_NAME = "RMI-Marketplace";
+	public static final int DEFAULT_PORT = 3306;
+	public static final String DEFAULT_DB = "ID2212";
 	
 	public void sell(int itemID, Client client) throws RemoteException, RejectedException;
 	
@@ -26,5 +25,7 @@ public interface Marketplace extends Remote
 	public void addItem(String name, float price, Client client) throws RemoteException, RejectedException;
 	
 	public void removeItem(int itemID, Client client) throws RemoteException, RejectedException;
+	
+	public String stats(Client client) throws RemoteException, RejectedException;
 
 }

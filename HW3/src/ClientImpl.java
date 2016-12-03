@@ -1,9 +1,11 @@
 import java.rmi.Naming;
 import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
 import java.util.Scanner;
 
 
-public class ClientImpl implements Client, Runnable
+@SuppressWarnings("serial")
+public class ClientImpl extends UnicastRemoteObject implements Client, Runnable
 {
 	private static final String USAGE = "java Client <BankName> <MarketplaceName>";
 	
@@ -13,7 +15,7 @@ public class ClientImpl implements Client, Runnable
 	private Marketplace marketplace;
 	private Bank bank;
 	
-	public ClientImpl(String bankName, String marketplaceName)
+	public ClientImpl(String bankName, String marketplaceName)  throws RemoteException
 	{
 		try {
 			bank = (Bank) Naming.lookup(bankName);
@@ -32,6 +34,7 @@ public class ClientImpl implements Client, Runnable
 		scan = new Scanner(System.in);
 		try {
 			mainMenu();
+			scan.close();
 		} catch (RemoteException e) {
 			e.printStackTrace();
 		}
@@ -43,8 +46,8 @@ public class ClientImpl implements Client, Runnable
 		{
 			String username, password;
 
-			System.out.print("1. Marketplace Login\n2. New Account\n3. Exit\n> ");			
-			switch (scan.nextInt())
+			System.out.print("1. Marketplace Login\n2. New Account\n3. Exit\n> ");		
+			switch (Integer.parseInt(scan.nextLine()))
 			{
 			case 1:
 				System.out.print("Username> ");
@@ -76,7 +79,7 @@ public class ClientImpl implements Client, Runnable
 					marketplace.newAccount(username, password);
 					bank.newAccount(username);
 				} catch (RejectedException e) {
-					System.err.println("Failed to create new account.");
+					System.err.println("Failed to create new account");
 				}
 				break;
 			case 3:
@@ -90,7 +93,7 @@ public class ClientImpl implements Client, Runnable
 		while(true)
 		{
 			System.out.println("1. Bank\n2. Inventory\n3. Market\n4. Logout\n> ");
-			switch (scan.nextInt())
+			switch (Integer.parseInt(scan.nextLine()))
 			{
 			case 1:
 				bankMenu();
@@ -114,14 +117,16 @@ public class ClientImpl implements Client, Runnable
 		while(true)
 		{
 			System.out.print("1. Balance\n2. Deposit\n3. Withdraw\n4. Back\n> ");			
-			switch (scan.nextInt())
+			switch (Integer.parseInt(scan.nextLine()))
 			{
 			case 1:
 				System.out.println("$" + account.getBalance());
 				break;
 			case 2:
 				try {
-					account.deposit(scan.nextFloat());
+					System.out.print("Value ($)> ");
+					float value = Float.parseFloat(scan.nextLine());
+					account.deposit(value);
 				} catch (RejectedException e) {
 					e.printStackTrace();
 				}
@@ -143,8 +148,8 @@ public class ClientImpl implements Client, Runnable
 	{
 		while (true)
 		{
-			System.out.print("1. List Items\n2. New Item\n3. Delete Item\n4. Back\n> ");
-			switch (scan.nextInt())
+			System.out.print("1. List Items\n2. New Item\n3. Remove Item\n4. Back\n> ");
+			switch (Integer.parseInt(scan.nextLine()))
 			{
 			case 1:
 				Item[] items = marketplace.getInventory(this);
@@ -155,13 +160,14 @@ public class ClientImpl implements Client, Runnable
 				System.out.print("Item name> ");
 				String name = scan.nextLine();
 				System.out.print("Item price ($)> ");
-				float price = scan.nextFloat();
+				float price = Float.parseFloat(scan.nextLine());
 				
 				marketplace.addItem(name, price, this);
 				break;
 			case 3:
 				System.out.print("Item ID> ");
-				marketplace.removeItem(scan.nextInt(), this);
+				int id = Integer.parseInt(scan.nextLine());
+				marketplace.removeItem(id, this);
 				break;
 			case 4:
 				return;
@@ -173,9 +179,9 @@ public class ClientImpl implements Client, Runnable
 	{
 		while (true)
 		{
-			// TODO: add wishes
-			System.out.print("1. Show Items\n2. Buy Item\n3. Sell Item\n4. Back\n> ");
-			switch (scan.nextInt())
+			int ID;
+			System.out.print("1. Show Items\n2. Buy Item\n3. Sell Item\n4. Stats\n5. Back\n> ");
+			switch (Integer.parseInt(scan.nextLine()))
 			{
 			case 1:
 				Item[] items = marketplace.getMarketItems(this);
@@ -183,13 +189,22 @@ public class ClientImpl implements Client, Runnable
 				break;
 			case 2:
 				System.out.print("Item ID> ");
-				marketplace.buy(scan.nextInt(), this);
+				ID = Integer.parseInt(scan.nextLine());
+				try {
+					marketplace.buy(ID, this);
+				} catch (RejectedException e) {
+					System.err.print(e.getMessage());
+				}
 				break;
 			case 3:
 				System.out.print("Inventory Item ID> ");
-				marketplace.sell(scan.nextInt(), this);
+				ID = Integer.parseInt(scan.nextLine());
+				marketplace.sell(ID, this);
 				break;
 			case 4:
+				System.out.println(marketplace.stats(this));
+				break;
+			case 5:
 				return;
 			}
 		}
@@ -227,6 +242,10 @@ public class ClientImpl implements Client, Runnable
 		if (args.length >= 1) bankName = args[0];
 		if (args.length >= 1) marketplaceName = args[1];
 		
-		new ClientImpl(bankName, marketplaceName).run();
+		try {
+			new ClientImpl(bankName, marketplaceName).run();
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
 	}
 }

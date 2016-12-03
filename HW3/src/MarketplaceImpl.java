@@ -6,16 +6,15 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
-import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Map;
 
 
 @SuppressWarnings("serial")
 public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 {
 	public final String marketplaceName;
+	private Bank bank;						// used to retrieve seller account
 	
 	private List<Client> registeredClients = new LinkedList<Client>();
 	
@@ -29,21 +28,23 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
     private PreparedStatement getMarketItemsStatement;
     private PreparedStatement getNoInventoryStatement;
     private PreparedStatement getInventoryStatement;
-    private PreparedStatement removeItemStatement;
     private PreparedStatement changeItemOwnerStatement;
     private PreparedStatement updateSoldStatement;
     private PreparedStatement updateBoughtStatement;
     private PreparedStatement getItemOwnerStatement;
-
-
-    private boolean isConnInitialized;
 	
-	protected MarketplaceImpl(String marketplaceName) throws RemoteException
+	protected MarketplaceImpl(String marketplaceName, Bank bank) throws RemoteException
 	{
 		super();
 		
 		this.marketplaceName = marketplaceName;
+		this.bank = bank;
 		connect();
+		try {
+			createTable();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 	
 	private void connect()
@@ -52,7 +53,8 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 		{
 			Class.forName("com.mysql.jdbc.Driver");
 	        conn = DriverManager.getConnection("jdbc:mysql://localhost:" + Marketplace.DEFAULT_PORT + "/" +
-					Marketplace.DEFAULT_DB, "root", "javajava");
+					Marketplace.DEFAULT_DB, "root", "test");
+	        statement = conn.createStatement();
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		} catch (SQLException e) {
@@ -62,44 +64,46 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 	
 	private void createTable() throws Exception
 	{
-        ResultSet result = conn.getMetaData().getTables(null, null, "ACCOUNT", null);
+        ResultSet result = conn.getMetaData().getTables(null, null, "accounts", null);
         if (result.next()) dropTable();
-
+        result.close();
+        
+        System.out.println("Creating accounts");
         statement.executeUpdate("CREATE TABLE accounts (" + 
         						"username VARCHAR(255) NOT NULL PRIMARY KEY, " +
         						"password VARCHAR(255), " +
-        						"no_sold INT, " +
-        						"no_bought INT)");
+        						"no_sold INTEGER, " +
+        						"no_bought INTEGER)");
        
+        System.out.println("Creating items");
+
         statement.executeUpdate("CREATE TABLE items (" +
-        						"id INT NOT NULL AUTO_INCREMENT PRIMARY KEY, " +
+        						"id INTEGER NOT NULL PRIMARY KEY AUTO_INCREMENT," +
         						"name VARCHAR(255), " +
         						"price FLOAT, " +
         						"ownerUsername VARCHAR(255), " +
         						"isListed BOOLEAN)");
-
-        isConnInitialized = true;
+        
+        System.out.println("Preparing statements");
         newAccountStatement = 		conn.prepareStatement("INSERT INTO accounts VALUES (?, ?, ?, ?)");
         getAccountStatement = 		conn.prepareStatement("SELECT * from accounts WHERE username=?");
-        newItemStatement = 			conn.prepareStatement("INSERT INTO items VALUES (?, ?, ?, ?)");
-        listItemStatement = 		conn.prepareStatement("UPDATE items SET isListed=? WHERE id=?");
+        newItemStatement = 			conn.prepareStatement("INSERT INTO items VALUES (?, ?, ?, ?, ?)");
+        listItemStatement = 		conn.prepareStatement("UPDATE items SET isListed=? WHERE id=? AND ownerUsername=?");
         getNoMarketItemsStatement =	conn.prepareStatement("SELECT COUNT(*) FROM items WHERE isListed=TRUE");
         getMarketItemsStatement = 	conn.prepareStatement("SELECT * FROM items WHERE isListed=TRUE");
-        getNoInventoryStatement =	conn.prepareStatement("SELECT COUNT(*) FROM items WHERE isListed=FALSE AND ownerUsername=?");
+        getNoInventoryStatement =	conn.prepareStatement("SELECT COUNT(*) FROM items WHERE isListed=0 AND ownerUsername=?");
         getInventoryStatement =		conn.prepareStatement("SELECT * FROM items WHERE isListed=FALSE AND ownerUsername=?");
-        removeItemStatement =		conn.prepareStatement("UPDATE items SET ownerUsername=NULL WHERE id=?");	// TODO rem?
-        changeItemOwnerStatement =	conn.prepareStatement("UPDATE items SET ownerUsername=? WHERE id=?");
+        changeItemOwnerStatement =	conn.prepareStatement("UPDATE items SET ownerUsername=?, isListed=FALSE WHERE id=? AND ownerUsername=?");
         updateSoldStatement =		conn.prepareStatement("UPDATE accounts SET no_sold=no_sold+1 WHERE username=?");
         updateBoughtStatement =		conn.prepareStatement("UPDATE accounts SET no_bought=no_bought+1 WHERE username=?");
         getItemOwnerStatement =		conn.prepareStatement("SELECT * FROM items WHERE id=?");
-
-        System.out.println();
-        System.out.println("tables created.");
+        
+        System.out.println("Marketplace ready.");
     }
 	
     private void dropTable() throws Exception
     {
-        int NoOfAffectedRows = statement.executeUpdate("DROP TABLE account");
+        int NoOfAffectedRows = statement.executeUpdate("DROP TABLE accounts");
         System.out.println("Table account dropped, " + NoOfAffectedRows + " row(s) affected");
         
         NoOfAffectedRows = statement.executeUpdate("DROP TABLE items");
@@ -121,8 +125,9 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 				
 		try
 		{
-			listItemStatement.setBoolean(1, true);
-			listItemStatement.setInt(2, itemID);
+			listItemStatement.setBoolean(1, true);						// set isListed (on Market) to true
+			listItemStatement.setInt(2, itemID);						// for item ID
+			listItemStatement.setString(3, client.getName());			// owned by client
 			int noOfAffectedRows = listItemStatement.executeUpdate();
 			System.out.println("data inserted in " + noOfAffectedRows + " row(s).");
 		} catch (SQLException e) {
@@ -131,19 +136,18 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 	}
 
 	@Override
-	public void buy(int itemID, Client client) throws RemoteException, RejectedException
+	public void buy(int itemID, Client buyer) throws RemoteException, RejectedException
 	{
-		isAuthentic(client);
+		isAuthentic(buyer);
 		if (itemID <= 0) throw new RejectedException("Item does not exist");
-
 		
 		try {
 			getItemOwnerStatement.setInt(1, itemID);
 			ResultSet rs = getItemOwnerStatement.executeQuery();
 			String seller;
 			float price;
-			
-			if (rs.next())		// TODO make sure next is called everywhere when we fetch
+						
+			if (rs.next())
 			{
 				seller = rs.getString("ownerUsername");
 				price = rs.getFloat("price");
@@ -151,29 +155,33 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 			else {
 				throw new RejectedException("Item does not exist");
 			}
-			
-			if (client.getAccount().getBalance() < price) throw new RejectedException("Not enough balance");
-			
+						
+			if (buyer.getAccount().getBalance() < price) throw new RejectedException("Not enough balance");
+						
 			// Money transfer
-			client.getAccount().withdraw(price);							// remove $ from buyer
-			//buyingItem.owner.getAccount().deposit(buyingItem.price);		// add $ to seller	TODO: remove money sender
-
+			buyer.getAccount().withdraw(price);								// remove $ from buyer
+			bank.getAccount(seller).deposit(price);							// add $ to seller
+						
 			// Item ownership transfer
-			changeItemOwnerStatement.setString(1, client.getName());
+			changeItemOwnerStatement.setString(1, buyer.getName());
 			changeItemOwnerStatement.setInt(2, itemID);
+			changeItemOwnerStatement.setString(3, seller);			
 			int NoOfAffectedRows = changeItemOwnerStatement.executeUpdate();
-	        System.out.println("Ownership updated, " + NoOfAffectedRows + " row(s) affected");
-	        
-	        if (NoOfAffectedRows == 0) throw new RejectedException("Item does not exist");
-	        
+			
+	        if (NoOfAffectedRows == 0) throw new RejectedException("Item was purchased already");
+	        	        
 	        // Increment counters
-	        updateBoughtStatement.setString(1, client.getName());
+	        updateBoughtStatement.setString(1, buyer.getName());
 	        NoOfAffectedRows = updateBoughtStatement.executeUpdate();
 	        System.out.println("Number of bought updated, " + NoOfAffectedRows + " row(s) affected");
-
+	        	        
 	        updateSoldStatement.setString(1, seller);
-			
-		} catch (SQLException e) {
+	        NoOfAffectedRows = updateSoldStatement.executeUpdate();
+	        System.out.println("Number of sold updated, " + NoOfAffectedRows + " row(s) affected");
+	    }
+		catch (SQLException e)
+		{
+			e.printStackTrace();
 			throw new RejectedException("SQL error");
 		}
 	}
@@ -183,13 +191,16 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 	{
 		try
 		{
-			int size = getNoMarketItemsStatement.executeQuery().getInt(1);
+			ResultSet res = getNoMarketItemsStatement.executeQuery();
+			res.next();
+			int size = res.getInt(1);
 			Item[] items = new Item[size];
-
+			
 			ResultSet rs = getMarketItemsStatement.executeQuery();
 			
 			for (int i = 0; i < size; i++)
 			{
+				rs.next();
 				items[i] = new Item(rs.getInt("id"), rs.getString("name"), rs.getFloat("price"), rs.getString("ownerUsername"));
 			}
 			rs.close();
@@ -243,10 +254,7 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 	{
 		if (password.length() < 8) throw new RejectedException("Password not sufficiently long");
 		
-		try {
-			
-			// TODO make sure new account is unique
-			
+		try {			
 			newAccountStatement.setString(1, username);
 			newAccountStatement.setString(2, password);
 			newAccountStatement.setInt(3, 0);
@@ -268,18 +276,22 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 		
 		try
 		{
-			getNoInventoryStatement.setString(1, client.getName());
-			int size = getNoInventoryStatement.executeQuery().getInt(1);
+			getNoInventoryStatement.setString(1, client.getName());			
+			ResultSet res = getNoInventoryStatement.executeQuery();
+			res.next();
+			int size = res.getInt(1);
 			Item[] items = new Item[size];
-			
+						
 			getInventoryStatement.setString(1, client.getName());
 			ResultSet rs = getInventoryStatement.executeQuery();
-			
+						
 			for (int i = 0; i < size; i++)
 			{
+				rs.next();
 				items[i] = new Item(rs.getInt("id"), rs.getString("name"), rs.getFloat("price"), rs.getString("ownerUsername"));
 			}
 			rs.close();
+			
 			return items;
 			
 		} catch (SQLException e) {
@@ -293,22 +305,22 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 		isAuthentic(client);
 
 		try {
-			newItemStatement.setString(1, name);
-			newItemStatement.setFloat(2, price);
-			newItemStatement.setString(3, client.getName());
-			newItemStatement.setBoolean(4, false);
+			newItemStatement.setInt(1, 0);					// id is auto incremented in mysql; yet still needs a value
+			newItemStatement.setString(2, name);
+			newItemStatement.setFloat(3, price);
+			newItemStatement.setString(4, client.getName());
+			newItemStatement.setBoolean(5, false);
 			
-			ResultSet rs = getAccountStatement.executeQuery();
-			
-			if (!rs.next())
+			int noOfAffectedRows = newItemStatement.executeUpdate();
+			System.out.println("data inserted in " + noOfAffectedRows + " row(s).");
+									
+			/*if (test == 0)
 			{
-				rs.close();
 				throw new RejectedException("Failed to add item to DB");
-			}
-			rs.close();
-
+			}*/
 		} catch (SQLException e) {
-			throw new RejectedException("Failed to add item to DB");
+			System.out.println("Exception");
+			e.printStackTrace();
 		}
 	}
 
@@ -318,10 +330,33 @@ public class MarketplaceImpl extends UnicastRemoteObject implements Marketplace
 		isAuthentic(client);
 
 		try {
-			removeItemStatement.setInt(itemID, 1);
-			int noOfAffectedRows = removeItemStatement.executeUpdate();
+			changeItemOwnerStatement.setNull(1, java.sql.Types.VARCHAR);		// owner to null
+			changeItemOwnerStatement.setInt(2, itemID);							// for item ID
+			changeItemOwnerStatement.setString(3, client.getName());			// for an item the client owns
+
+			int noOfAffectedRows = changeItemOwnerStatement.executeUpdate();
 			System.out.println("data updated in " + noOfAffectedRows + " row(s).");
 		} catch (SQLException e) {
+			throw new RejectedException("SQL error");
+		}
+	}
+	
+	@Override
+	public String stats(Client client) throws RemoteException, RejectedException
+	{
+		isAuthentic(client);
+		
+		String returnString = "";
+		
+		try {
+			getAccountStatement.setString(1, client.getName());
+			ResultSet rs = getAccountStatement.executeQuery();
+			if (rs.next()) returnString = "#Bought: " + rs.getInt("no_bought") + "; #Sold: " + rs.getInt("no_sold");
+			return returnString;
+		}
+		catch (SQLException e)
+		{
+			e.printStackTrace();
 			throw new RejectedException("SQL error");
 		}
 	}
