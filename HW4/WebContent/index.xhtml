@@ -1,0 +1,48 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+          "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:ui="http://xmlns.jcp.org/jsf/facelets"
+      xmlns:h="http://java.sun.com/jsf/html"
+      xmlns:f="http://java.sun.com/jsf/core">
+<head>
+  <title><ui:insert name="title">Default title</ui:insert></title>
+</head>
+
+<body>
+<ui:debug hotkey="x" rendered="#{initParam['javax.faces.FACELETS_DEVELOPMENT']}"/>
+
+<div id="header">
+    <ui:insert name="header">
+    	<!--  include your header file or uncomment the include below and create header.xhtml in this directory -->
+    	<!-- <ui:include src="header.xhtml"/> -->
+    </ui:insert>
+</div>
+
+
+<div id="content">
+  <ui:insert name="content">
+    	<!--  include your content file or uncomment the include below and create content.xhtml in this directory -->
+	  	<!-- <div> -->
+    	<!-- <ui:include src="content.xhtml"/> -->  
+    	<!-- </div> -->
+    <h3>JSF 2.2 Hello World Example</h3>
+    <h:form>
+        <h:outputText id="output" value="#{inputText}"></h:outputText>
+        <h:inputText id="input" value="#{inputText}"></h:inputText>
+        <h:commandButton value="Submit" action="index">
+            <f:ajax execute="input" render="output">
+        </f:ajax></h:commandButton>
+    </h:form>
+  </ui:insert>
+</div>
+
+<div id="footer">
+  <ui:insert name="footer">
+    	<!--  include your header file or uncomment the include below and create footer.xhtml in this directory -->
+		<!--<ui:include src="footer.xhtml"/>  -->
+  </ui:insert>
+</div>
+
+</body>
+
+</html>
