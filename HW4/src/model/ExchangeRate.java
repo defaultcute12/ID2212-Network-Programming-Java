@@ -1,51 +1,70 @@
 package model;
 
-import java.util.Currency;
-
+import java.io.Serializable;
 import javax.persistence.Entity;
 import javax.persistence.GeneratedValue;
+import javax.persistence.GenerationType;
 import javax.persistence.Id;
 
-
+/**
+ * A persistent representation of an account.
+ */
 @Entity
-public class ExchangeRate
+public class ExchangeRate implements ExchangeRateDTO, Serializable
 {
-	@Id
-	@GeneratedValue
-	private int ID;
-	
-	private Currency sellingCurrency;
-	private Currency buyingCurrency;
-	private float price;
-	
-	// must have a public no-argument constructor as defined by Entity
-	public ExchangeRate() { }
-	
-	public ExchangeRate(Currency sellingCurrency, Currency buyingCurrency, float price)
-	{
-		this.sellingCurrency = sellingCurrency;
-		this.buyingCurrency = buyingCurrency;
-		this.price = price;
-	}
-	
-	public float getPrice()
-	{
-		return price;
-	}
-	
-	public void setPrice(float price)
-	{
-		this.price = price;
-	}
-	
-	public Currency getSelling()
-	{
-		return sellingCurrency;
-	}
-	
-	public Currency getBuying()
-	{
-		return buyingCurrency;
-	}
+    private static final long serialVersionUID = 16247164401L;
+    @Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private int ID;
+    private float rate;
+    private String fromCurrency;
+    private String toCurrency;
 
+    /**
+     * Creates a new instance of Account
+     */
+    public ExchangeRate() {
+    }
+
+    /**
+     * Creates a new instance of Account
+     */
+    public ExchangeRate(float rate, String fromCurrency, String toCurrency) {
+        this.rate = rate;
+        this.fromCurrency = fromCurrency;
+        this.toCurrency = toCurrency;
+    }
+
+    @Override
+    public String getToCurrency() {
+        return toCurrency;
+    }
+
+    @Override
+    public String getFromCurrency() {
+        return fromCurrency;
+    }
+
+    @Override
+    public float getRate() {
+        return rate;
+    }
+
+    @Override
+    public int hashCode() {
+        int hash = 0;
+        return new Integer(ID).hashCode();
+    }
+
+    @Override
+    public boolean equals(Object object) {
+        if (!(object instanceof ExchangeRate)) return false;
+        ExchangeRate other = (ExchangeRate) object;
+        return this.ID == other.ID;
+    }
+
+    @Override
+    public String toString() {
+        return "[id=" + ID + "]";
+    }
 }

@@ -10,11 +10,11 @@
         <h1>Netpro Currency Converter</h1>
 
         <p>
-        	<h:outputText rendered="#{converterManager.success}"  value="#{converterManager.conversion}"/>
+            <h:outputText rendered="#{converterManager.success}"  value="Success!"/>
         </p>
 
         <h:form>
-            <h3>Convert Currency</h3>
+            <h3>Add new Exchange Rate</h3>
             <p>
                 <h:outputLabel for="fromCurrency" value="From Currency: "/>
             	<h:selectOneMenu id="fromCurrency" value="#{converterManager.fromCurrency}">
@@ -34,7 +34,7 @@
                 <h:inputText id="value" value="#{converterManager.value}"/>
             </p>
             <p>
-                <h:commandButton value="Convert" action="#{converterManager.calcConversion}"/>
+                <h:commandButton value="Add rate" action="#{converterManager.addConversion}"/>
             </p>
             <hr/>
         </h:form>
