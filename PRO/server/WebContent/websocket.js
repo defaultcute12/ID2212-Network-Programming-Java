@@ -1,0 +1,154 @@
+window.onload = init;
+var socket = new WebSocket("ws://localhost:8080/NET-PRO/play");
+socket.onmessage = onMessage;
+
+function onMessage(event)
+{
+	var message = JSON.parse(event.data);
+	
+	if (message.action === "add")			printDeviceElement(message);
+	else if (message.action === "toggle")
+	{
+		var node = document.getElementById(message.id);
+		var statusText = node.children[2];
+		
+		if (message.status === "On") {
+			statusText.innerHTML = "Status: " + message.status + " (<a href=\"#\" OnClick=toggleDevice(" + message.id + ")>Turn off</a>)";
+		} else if (message.status === "Off") {
+			statusText.innerHTML = "Status: " + message.status + " (<a href=\"#\" OnClick=toggleDevice(" + message.id + ")>Turn on</a>)";
+		}
+	}
+	else if (message.action === "login")
+	{
+		if (message.status !== "success") console.log("Status: " + message.status);
+		else {
+			document.getElementById("login").innerHTML = message.username;
+			document.getElementById("refresh").style.display = '';
+			document.getElementById("create").style.display = '';
+			showLobbies();
+		}
+	}
+	else if (message.action === "browser")
+	{
+		if (message.status !== "update") console.log("Status: " + message.status);
+		else {
+			document.getElementById("content").innerHTML = "";
+			
+			message.lobbies.forEach(function(lobby) {
+				printLobby(lobby);
+			});
+		}
+	}
+}
+
+/* Usage removed; kept as notes */
+function printDeviceElement(device)
+{
+	var content = document.getElementById("content");
+	
+	var deviceDiv = document.createElement("div");
+	deviceDiv.setAttribute("id", device.id);
+	deviceDiv.setAttribute("class", "device " + device.type);
+	content.appendChild(deviceDiv);
+	
+	var deviceName = document.createElement("span");
+	deviceName.setAttribute("class", "deviceName");
+	deviceName.innerHTML = device.name;
+	deviceDiv.appendChild(deviceName);
+	
+	var deviceType = document.createElement("span");
+	deviceType.innerHTML = "<b>Type:</b> " + device.type;
+	deviceDiv.appendChild(deviceType);
+	
+	var deviceStatus = document.createElement("span");
+	if (device.status === "On") {
+		deviceStatus.innerHTML = "<b>Status:</b> " + device.status + " (<a href=\"#\" OnClick=toggleDevice(" + device.id + ")>Turn off</a>)";
+	} else if (device.status === "Off") {
+		deviceStatus.innerHTML = "<b>Status:</b> " + device.status + " (<a href=\"#\" OnClick=toggleDevice(" + device.id + ")>Turn on</a>)";
+		//deviceDiv.setAttribute("class", "device off");
+	}
+	deviceDiv.appendChild(deviceStatus);
+	
+	var deviceDescription = document.createElement("span");
+	deviceDescription.innerHTML = "<b>Comments:</b> " + device.description;
+	deviceDiv.appendChild(deviceDescription);
+	
+	var removeDevice = document.createElement("span");
+	removeDevice.setAttribute("class", "removeDevice");
+	removeDevice.innerHTML = "<a href=\"#\" OnClick=removeDevice(" + device.id + ")>Remove device</a>";
+	deviceDiv.appendChild(removeDevice);
+}
+
+/* ---------- */
+
+function printLobby(lobby)
+{
+	var content = document.getElementById("content");
+	
+	var deviceDiv = document.createElement("div");
+	deviceDiv.setAttribute("type", lobby.type);
+	deviceDiv.setAttribute("class", "device Appliance");
+	content.appendChild(deviceDiv);
+	
+	var deviceName = document.createElement("span");
+	deviceName.setAttribute("class", "deviceName");
+	deviceName.innerHTML = lobby.name;
+	deviceDiv.appendChild(deviceName);
+	
+	var deviceType = document.createElement("span");
+	deviceType.innerHTML = "<b>Game type:</b> " + lobby.gameType;
+	deviceDiv.appendChild(deviceType);
+	
+	var deviceDescription = document.createElement("span");
+	deviceDescription.innerHTML = "<b>Participants:</b> " + lobby.noPlayers + " / " + lobby.maxNoPlayers;
+	deviceDiv.appendChild(deviceDescription);
+}
+
+function login()
+{
+	var LoginAction = {
+			action: "login",
+			username: "Whatwasit",
+			password: "reFUSE",
+	};
+	socket.send(JSON.stringify(LoginAction));
+}
+
+function showLobbies()
+{	
+	var BrowserAction = {
+			action: "browser",
+		};
+		socket.send(JSON.stringify(BrowserAction));
+}
+
+function createLobby()
+{
+	var name = document.getElementById("addDeviceForm").elements["device_name"].value;
+	
+	var CreateLobbyAction = {
+			action: "create-lobby",
+			name: name,
+		};
+	socket.send(JSON.stringify(CreateLobbyAction));
+	
+	hideForm();
+}
+
+
+/* --------- */
+
+function showForm() {
+	document.getElementById("addDeviceForm").style.display = '';
+}
+
+function hideForm() {
+	document.getElementById("addDeviceForm").style.display = "none";
+}
+
+function init()
+{
+	hideForm();
+	document.getElementById("refresh").style.display = "none";
+	document.getElementById("create").style.display = "none";
+}
