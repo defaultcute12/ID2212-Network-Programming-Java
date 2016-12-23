@@ -55,6 +55,7 @@ public class WebsocketServer
 					int lobbyID = lobbyHandler.newLobby(lobbyCreator, jsonMessage);
 					System.out.println("User " + lobbyCreator.getUsername() + " created lobby with ID " + lobbyID);
 				}
+				break;
 			case "browser":
 				System.out.println("Browser Action");
 				User browserUser = userHandler.getUser(session);

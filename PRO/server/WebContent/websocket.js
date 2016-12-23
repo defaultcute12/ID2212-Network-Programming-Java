@@ -1,5 +1,5 @@
 window.onload = init;
-var socket = new WebSocket("ws://localhost:8080/NET-PRO/play");
+var socket = new WebSocket("ws://localhost:8080/NET-PRO-Server/play");
 socket.onmessage = onMessage;
 
 function onMessage(event)
@@ -30,6 +30,7 @@ function onMessage(event)
 	}
 	else if (message.action === "browser")
 	{
+		console.log("Got browser message");
 		if (message.status !== "update") console.log("Status: " + message.status);
 		else {
 			document.getElementById("content").innerHTML = "";
@@ -38,6 +39,26 @@ function onMessage(event)
 				printLobby(lobby);
 			});
 		}
+	}
+	else if (message.action === "lobby")
+	{
+		console.log("Got lobby message");
+		
+		if (message.status !== "update") console.log("Status: " + message.status);
+		else {
+			console.log("Name " + message.name);
+			console.log("Type " + message.type);
+			
+			document.getElementById("content").innerHTML = "";
+			
+			message.players.forEach(function(player) {
+				printPlayer(player);
+			});
+		}
+	}
+	else if (message.action === "create-lobby")
+	{
+		console.log("Creating lobby, got: " + message.status);
 	}
 }
 
@@ -83,11 +104,12 @@ function printDeviceElement(device)
 
 function printLobby(lobby)
 {
+	console.log("Printing lobby");
 	var content = document.getElementById("content");
 	
 	var deviceDiv = document.createElement("div");
-	deviceDiv.setAttribute("type", lobby.type);
-	deviceDiv.setAttribute("class", "device Appliance");
+	deviceDiv.setAttribute("type", lobby.type);				// TODO undefined?
+	deviceDiv.setAttribute("class", "device Appliance");	// TODO fix
 	content.appendChild(deviceDiv);
 	
 	var deviceName = document.createElement("span");
@@ -102,6 +124,29 @@ function printLobby(lobby)
 	var deviceDescription = document.createElement("span");
 	deviceDescription.innerHTML = "<b>Participants:</b> " + lobby.noPlayers + " / " + lobby.maxNoPlayers;
 	deviceDiv.appendChild(deviceDescription);
+	
+	var removeDevice = document.createElement("span");
+	removeDevice.setAttribute("class", "removeDevice");
+	removeDevice.innerHTML = "<a href=\"#\" OnClick=joinLobby(" + lobby.id + ")>Join</a>";
+	deviceDiv.appendChild(removeDevice);
+}
+
+function printPlayer(player)
+{
+var content = document.getElementById("content");
+	
+	var deviceDiv = document.createElement("div");
+	deviceDiv.setAttribute("class", "device Appliance");	// TODO fix
+	content.appendChild(deviceDiv);
+	
+	var deviceName = document.createElement("span");
+	deviceName.setAttribute("class", "deviceName");
+	deviceName.innerHTML = player.username;
+	deviceDiv.appendChild(deviceName);
+	
+	var deviceType = document.createElement("span");
+	deviceType.innerHTML = "<b>EXP:</b> " + player.XP;
+	deviceDiv.appendChild(deviceType);
 }
 
 function login()
@@ -133,6 +178,15 @@ function createLobby()
 	socket.send(JSON.stringify(CreateLobbyAction));
 	
 	hideForm();
+}
+
+function joinLobby(id)
+{
+	var joinAction = {
+			action: "join-lobby",
+			id: id,
+		};
+		socket.send(JSON.stringify(joinAction));
 }
 
 

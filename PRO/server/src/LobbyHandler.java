@@ -22,20 +22,25 @@ public class LobbyHandler
 	
 	public int newLobby(User user, JsonObject message)
 	{
+		if (lobbies.containsKey(user.getID()))
+		{
+			sendNonuniqueMessage(user);
+			return -1;
+		}
+		
 		String lobbyName = message.getString("name");
 		Lobby newLobby = new Lobby(lobbyName, user, 2);		// TODO game-type
 		
-		int lobbyID = newLobby.getID();
-		lobbies.put(lobbyID, newLobby);
+		lobbies.put(user.getID(), newLobby);
 		
 		setUpdateMessage();
 		
-		return lobbyID;
+		return user.getID();
 	}
 	
 	public boolean joinLobby(User user, JsonObject message)
 	{
-		int lobbyID = message.getInt("lobby-id");
+		int lobbyID = message.getInt("id");
 		
 		if (!lobbies.containsKey(lobbyID))
 		{
@@ -66,6 +71,7 @@ public class LobbyHandler
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 		lobbies.forEach((k, lobby) -> {
 			arrayBuilder.add(Json.createObjectBuilder()
+					.add("id", lobby.getID())
 					.add("name", lobby.getName())
 					.add("owner", lobby.getOwnerName())
 					.add("gameType", lobby.getGameType())
@@ -80,6 +86,16 @@ public class LobbyHandler
 								.add("status", "update")
 								.add("lobbies", lobbyArray)
 								.build();
+	}
+	
+	private void sendNonuniqueMessage(User user)
+	{
+		JsonProvider provider = JsonProvider.provider();
+		JsonObject failureMessage = provider.createObjectBuilder()
+											.add("action", "create-lobby")
+											.add("status", "nonunique")
+											.build();
+		user.send(failureMessage);
 	}
 	
 	private void sendInactiveMessage(User user)

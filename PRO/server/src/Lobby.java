@@ -61,7 +61,8 @@ public class Lobby
 		
 		players[noPlayers++] = player;
 		
-		//informPlayers();
+		System.out.println("Will now inform lobby players of new player " + player.getUsername());
+		informPlayers();
 		
 		return true;
 	}
@@ -69,12 +70,12 @@ public class Lobby
 	private void informPlayers()
 	{
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-		for (User player : players)
-		{
+		for (int i = 0; i < noPlayers; i++)
+		{	
 			arrayBuilder.add(Json.createObjectBuilder()
-						.add("ID", player.getID())
-						.add("username", player.getUsername())
-						.add("XP", player.getXp()));
+						.add("ID", players[i].getID())
+						.add("username", players[i].getUsername())
+						.add("XP", players[i].getXp()));
 		}
 		JsonArray playerArray = arrayBuilder.build();
 
@@ -85,7 +86,7 @@ public class Lobby
 								.add("type", gameType)
 								.add("players", playerArray)
 								.build();
-
-		for (User user : players) user.send(message);
+		
+		for (int i = 0; i < noPlayers; i++) players[i].send(message);
 	}
 }
