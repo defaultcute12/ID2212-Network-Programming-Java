@@ -62,8 +62,8 @@ public class WebsocketServer
 				User loginUser = userHandler.login(jsonMessage, session);
 				if (loginUser != null) System.out.println("User " + loginUser.getUsername() + " signed in");
 				break;
-			case "create-lobby":
-				System.out.println("New Lobby Action");
+			case "create":
+				System.out.println("Create Action");
 				User lobbyCreator = userHandler.getUser(session);
 				if (lobbyCreator != null)
 				{
@@ -80,10 +80,15 @@ public class WebsocketServer
 					lobbyHandler.sendUpdateMessage(browserUser);
 				}
 				break;
-			case "join-lobby":						// TODO just name it join
+			case "join":
 				System.out.println("Join Action");
 				User joiningUser = userHandler.getUser(session);
 				if (joiningUser != null) lobbyHandler.joinLobby(joiningUser, jsonMessage);
+				break;
+			case "leave":
+				System.out.println("Leave Action");
+				User leavingUser = userHandler.getUser(session);
+				if (leavingUser != null) lobbyHandler.leaveLobby(leavingUser);
 				break;
 			default:
 				System.err.println("Got unknown message type");

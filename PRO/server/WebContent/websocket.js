@@ -22,10 +22,8 @@ function onMessage(event)
 	{
 		if (message.status !== "success") console.log("Status: " + message.status);
 		else {
-			document.getElementById("login").innerHTML = message.username;
-			document.getElementById("refresh").style.display = '';
-			document.getElementById("create").style.display = '';
-			showLobbies();
+			document.getElementById("account").innerHTML = message.username;
+			refresh();
 		}
 	}
 	else if (message.action === "browser")
@@ -33,6 +31,11 @@ function onMessage(event)
 		console.log("Got browser message");
 		if (message.status !== "update") console.log("Status: " + message.status);
 		else {
+			document.getElementById("refresh").style.display = '';
+			document.getElementById("lobby").style.display = '';
+			document.getElementById("lobby").innerHTML = "<a href=\"#\" OnClick=\"showForm()\">Create Lobby</a>";
+			document.getElementById("title").innerHTML = "Lobbies" + " (" + message.lobbies.length + ")";
+			
 			document.getElementById("content").innerHTML = "";
 			
 			message.lobbies.forEach(function(lobby) {
@@ -46,7 +49,11 @@ function onMessage(event)
 		
 		if (message.status !== "update") console.log("Status: " + message.status);
 		else {
-			console.log("Name " + message.name);
+			document.getElementById("refresh").style.display = "none";
+			document.getElementById("lobby").style.display = '';
+			document.getElementById("lobby").innerHTML = "<a href=\"#\" OnClick=\"leaveLobby()\">Leave Lobby</a>";
+			document.getElementById("title").innerHTML = message.name +" ("+ message.players.length +"/"+ message.max +")";
+			
 			console.log("Type " + message.type);
 			
 			document.getElementById("content").innerHTML = "";
@@ -56,7 +63,7 @@ function onMessage(event)
 			});
 		}
 	}
-	else if (message.action === "create-lobby")
+	else if (message.action === "create")
 	{
 		console.log("Creating lobby, got: " + message.status);
 	}
@@ -159,12 +166,12 @@ function login()
 	socket.send(JSON.stringify(LoginAction));
 }
 
-function showLobbies()
+function refresh()
 {	
 	var BrowserAction = {
 			action: "browser",
-		};
-		socket.send(JSON.stringify(BrowserAction));
+	};
+	socket.send(JSON.stringify(BrowserAction));
 }
 
 function createLobby()
@@ -172,9 +179,9 @@ function createLobby()
 	var name = document.getElementById("addDeviceForm").elements["device_name"].value;
 	
 	var CreateLobbyAction = {
-			action: "create-lobby",
+			action: "create",
 			name: name,
-		};
+	};
 	socket.send(JSON.stringify(CreateLobbyAction));
 	
 	hideForm();
@@ -183,10 +190,20 @@ function createLobby()
 function joinLobby(id)
 {
 	var joinAction = {
-			action: "join-lobby",
+			action: "join",
 			id: id,
-		};
-		socket.send(JSON.stringify(joinAction));
+	};
+	socket.send(JSON.stringify(joinAction));
+}
+
+function leaveLobby()
+{
+	var joinAction = {
+			action: "leave",
+	};
+	socket.send(JSON.stringify(joinAction));
+	
+	refresh();
 }
 
 
@@ -204,5 +221,6 @@ function init()
 {
 	hideForm();
 	document.getElementById("refresh").style.display = "none";
-	document.getElementById("create").style.display = "none";
+	document.getElementById("lobby").style.display = "none";
+
 }

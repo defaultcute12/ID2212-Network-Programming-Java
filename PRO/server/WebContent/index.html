@@ -10,9 +10,9 @@
 		<div id="wrapper">
 			<br />
 			<div id="addDevice">
-				<div class="button" id="login"> <a href="#" OnClick="login()">Login</a> </div>
-				<div class="button" id="refresh"> <a href="#" OnClick="showLobbies()">Refresh</a> </div>
-				<div class="button" id="create"> <a href="#" OnClick="showForm()">Create Lobby</a> </div>
+				<div class="button" id="account"><a href="#" OnClick="login()">Login</a></div>
+				<div class="button" id="refresh"><a href="#" OnClick="refresh()">Refresh</a></div>
+				<div class="button" id="lobby"><a href="#" OnClick="showForm()">Create Lobby</a></div>
 				<form id="addDeviceForm">
 					<h3>Create a new Lobby</h3>
 					<span>Name: <input type="text" name="device_name" id="device_name"></span>
@@ -28,7 +28,7 @@
 			</div>
 			<br />
 			
-			<h3>Lobbies:</h3>
+			<h3 id="title"></h3>
 			<div id="content"></div>
 		</div>
 	</body>

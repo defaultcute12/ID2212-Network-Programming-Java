@@ -24,7 +24,7 @@ public class LobbyHandler
 	{
 		if (user.getLobby() != null)						// user already tied to a lobby
 		{
-			sendOccupiedMessage(user);
+			sendProblemMessage(user, message.getString("action"), "occupied");
 			return -1;
 		}
 		
@@ -51,7 +51,7 @@ public class LobbyHandler
 		
 		if (!lobbies.containsKey(lobbyID))
 		{
-			sendInactiveMessage(user);
+			sendProblemMessage(user, message.getString("action"), "inactive");
 			return false;
 		}
 		
@@ -59,7 +59,7 @@ public class LobbyHandler
 		
 		if (lobby.isFull())
 		{
-			sendFullMessage(user);
+			sendProblemMessage(user, message.getString("action"), "full");
 			return false;
 		}
 		
@@ -90,7 +90,6 @@ public class LobbyHandler
 	}
 	
 	public void sendUpdateMessage(User user) {
-		System.out.println("Sending update now");
 		user.send(latestUpdateMessage);
 	}
 	
@@ -116,33 +115,13 @@ public class LobbyHandler
 								.build();
 	}
 	
-	private void sendOccupiedMessage(User user)
+	private static void sendProblemMessage(User user, String action, String status)
 	{
 		JsonProvider provider = JsonProvider.provider();
-		JsonObject failureMessage = provider.createObjectBuilder()
-											.add("action", "create-lobby")		// TODO fix action
-											.add("status", "nonunique")
-											.build();
-		user.send(failureMessage);
-	}
-	
-	private void sendInactiveMessage(User user)
-	{
-		JsonProvider provider = JsonProvider.provider();
-		JsonObject failureMessage = provider.createObjectBuilder()
-											.add("action", "lobby")
-											.add("status", "inactive")
-											.build();
-		user.send(failureMessage);
-	}
-	
-	private void sendFullMessage(User user)
-	{
-		JsonProvider provider = JsonProvider.provider();
-		JsonObject failureMessage = provider.createObjectBuilder()
-											.add("action", "lobby")
-											.add("status", "full")
-											.build();
-		user.send(failureMessage);
+		JsonObject message = provider.createObjectBuilder()
+									.add("action", action)
+									.add("status", status)
+									.build();
+		user.send(message);
 	}
 }

@@ -69,7 +69,6 @@ public class Lobby
 	
 	public boolean removePlayer(User player)
 	{
-		System.out.println("Inside lobby: removing " + player.getUsername());
 		boolean shift = false;
 		for (int i = 0; i < noPlayers; i++)
 		{
@@ -85,9 +84,8 @@ public class Lobby
 			}
 		}
 		
-		if (shift)				// we found player to be removed
+		if (shift)				// found player to be removed
 		{
-			System.out.println("Inside lobby: found removing player. Will now inform remainers");
 			noPlayers--;
 			informPlayers();
 			return true;
@@ -113,6 +111,7 @@ public class Lobby
 								.add("status", "update")
 								.add("name", name)
 								.add("type", gameType)
+								.add("max", players.length)
 								.add("players", playerArray)
 								.build();
 		
