@@ -8,6 +8,7 @@ import javax.websocket.Session;
 public class User
 {
 	private transient Session session;
+	private transient Lobby lobby;
 	
 	private final int ID;
 	private final String username;
@@ -20,9 +21,16 @@ public class User
 		this.xp = xp;
 	}
 	
-	public void setSession(Session session)
-	{
+	public void setSession(Session session) {
 		this.session = session;
+	}
+	
+	public void setLobby(Lobby lobby) {
+		this.lobby = lobby;
+	}
+	
+	public Lobby getLobby() {
+		return lobby;
 	}
 	
 	public int getID() {

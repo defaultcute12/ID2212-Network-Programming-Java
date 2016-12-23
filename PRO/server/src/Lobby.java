@@ -67,11 +67,40 @@ public class Lobby
 		return true;
 	}
 	
+	public boolean removePlayer(User player)
+	{
+		System.out.println("Inside lobby: removing " + player.getUsername());
+		boolean shift = false;
+		for (int i = 0; i < noPlayers; i++)
+		{
+			if (shift)
+			{
+				players[i-1] = players[i];
+				players[i] = null;
+			}
+			else if (player.equals(players[i]))
+			{
+				shift = true;
+				players[i] = null;
+			}
+		}
+		
+		if (shift)				// we found player to be removed
+		{
+			System.out.println("Inside lobby: found removing player. Will now inform remainers");
+			noPlayers--;
+			informPlayers();
+			return true;
+		}
+		
+		return false;
+	}
+	
 	private void informPlayers()
 	{
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 		for (int i = 0; i < noPlayers; i++)
-		{	
+		{
 			arrayBuilder.add(Json.createObjectBuilder()
 						.add("ID", players[i].getID())
 						.add("username", players[i].getUsername())

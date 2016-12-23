@@ -24,10 +24,25 @@ public class WebsocketServer
 	private UserHandler userHandler;
 	
 	@OnOpen
-	public void open(Session session) { }
+	public void open(Session session) {
+		System.out.println("Open action");
+	}
 	
 	@OnClose
-	public void close(Session session) { }
+	public void close(Session session)
+	{
+		System.out.println("Close action");
+		
+		User closingUser = userHandler.getUser(session);
+		if (closingUser != null)
+		{
+			System.out.println(closingUser.getUsername() + " closed connection");
+			lobbyHandler.leaveLobby(closingUser);
+		}
+		else {
+			System.out.println("Non-logged in user closed connection");
+		}
+	}
 	
 	@OnMessage
 	public void handleMessage(String message, Session session)
@@ -65,8 +80,8 @@ public class WebsocketServer
 					lobbyHandler.sendUpdateMessage(browserUser);
 				}
 				break;
-			case "join-lobby":
-				System.out.println("Lobby Action");
+			case "join-lobby":						// TODO just name it join
+				System.out.println("Join Action");
 				User joiningUser = userHandler.getUser(session);
 				if (joiningUser != null) lobbyHandler.joinLobby(joiningUser, jsonMessage);
 				break;

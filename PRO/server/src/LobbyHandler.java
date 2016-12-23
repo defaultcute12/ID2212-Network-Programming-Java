@@ -22,24 +22,31 @@ public class LobbyHandler
 	
 	public int newLobby(User user, JsonObject message)
 	{
-		if (lobbies.containsKey(user.getID()))
+		if (user.getLobby() != null)						// user already tied to a lobby
 		{
-			sendNonuniqueMessage(user);
+			sendOccupiedMessage(user);
 			return -1;
 		}
 		
 		String lobbyName = message.getString("name");
 		Lobby newLobby = new Lobby(lobbyName, user, 2);		// TODO game-type
+		user.setLobby(newLobby);							// tie lobby to user
+		lobbies.put(newLobby.getID(), newLobby);			// store lobby
 		
-		lobbies.put(user.getID(), newLobby);
-		
-		setUpdateMessage();
-		
-		return user.getID();
+		setUpdateMessage();									// introduction of new lobby
+		return newLobby.getID();
 	}
 	
 	public boolean joinLobby(User user, JsonObject message)
 	{
+		/* TODO if user tied to lobby. Commented to allow same user to join same lobby multiple times (for testing)
+		if (user.getLobby() != null)
+		{
+			sendNonuniqueMessage(user);
+			return false;
+		}
+		*/
+		
 		int lobbyID = message.getInt("id");
 		
 		if (!lobbies.containsKey(lobbyID))
@@ -56,8 +63,29 @@ public class LobbyHandler
 			return false;
 		}
 		
+		user.setLobby(lobby);				// tie lobby to user
 		lobby.addPlayer(user);
-		setUpdateMessage();				// update to reflect the change in number of players in the lobby
+		
+		setUpdateMessage();					// update to reflect the change in number of players in the lobby
+		return true;
+	}
+	
+	public boolean leaveLobby(User user)
+	{
+		Lobby lobby = user.getLobby();
+		if (lobby == null) return false;	// user not linked with any lobby
+		if (!lobby.removePlayer(user))		// user linked with lobby, but not as a player. Should not happen?
+		{
+			System.err.println("User " + user.getUsername() + " leaving linked lobby not recognized as player");
+			user.setLobby(null);
+			return false;
+		}
+		
+		user.setLobby(null);
+		
+		if (lobby.getNoPlayers() == 0) lobbies.remove(lobby.getID());
+		
+		setUpdateMessage();					// change in number of players in the lobby, or removal of lobby
 		return true;
 	}
 	
@@ -88,11 +116,11 @@ public class LobbyHandler
 								.build();
 	}
 	
-	private void sendNonuniqueMessage(User user)
+	private void sendOccupiedMessage(User user)
 	{
 		JsonProvider provider = JsonProvider.provider();
 		JsonObject failureMessage = provider.createObjectBuilder()
-											.add("action", "create-lobby")
+											.add("action", "create-lobby")		// TODO fix action
 											.add("status", "nonunique")
 											.build();
 		user.send(failureMessage);
