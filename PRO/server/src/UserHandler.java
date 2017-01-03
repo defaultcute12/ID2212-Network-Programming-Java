@@ -82,7 +82,7 @@ public class UserHandler
 											.add("status", "success")
 											.add("ID", user.getID())
 											.add("username", user.getUsername())
-											.add("XP", user.getXp())
+											.add("XP", user.getEXP())
 											.build();
 		user.send(successMessage);
 	}

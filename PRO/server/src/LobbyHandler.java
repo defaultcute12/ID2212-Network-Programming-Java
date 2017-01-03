@@ -13,7 +13,8 @@ import javax.json.spi.JsonProvider;
 @ApplicationScoped
 public class LobbyHandler
 {
-	private final Map<Integer, Lobby> lobbies = new HashMap<>();
+	private final Map<Integer, Lobby> listedLobbies = new HashMap<>();
+	private final Map<Integer, Lobby> runningLobbies = new HashMap<>();
 	private JsonObject latestUpdateMessage;
 	
 	public LobbyHandler() {
@@ -31,7 +32,7 @@ public class LobbyHandler
 		String lobbyName = message.getString("name");
 		Lobby newLobby = new Lobby(lobbyName, user, 2);		// TODO game-type
 		user.setLobby(newLobby);							// tie lobby to user
-		lobbies.put(newLobby.getID(), newLobby);			// store lobby
+		listedLobbies.put(newLobby.getID(), newLobby);		// store lobby
 		
 		setUpdateMessage();									// introduction of new lobby
 		return newLobby.getID();
@@ -49,13 +50,13 @@ public class LobbyHandler
 		
 		int lobbyID = message.getInt("id");
 		
-		if (!lobbies.containsKey(lobbyID))
+		if (!listedLobbies.containsKey(lobbyID))
 		{
 			sendProblemMessage(user, message.getString("action"), "inactive");
 			return false;
 		}
 		
-		Lobby lobby = lobbies.get(lobbyID);
+		Lobby lobby = listedLobbies.get(lobbyID);
 		
 		if (lobby.isFull())
 		{
@@ -83,10 +84,33 @@ public class LobbyHandler
 		
 		user.setLobby(null);
 		
-		if (lobby.getNoPlayers() == 0) lobbies.remove(lobby.getID());
+		if (lobby.getNoPlayers() == 0) listedLobbies.remove(lobby.getID());
 		
 		setUpdateMessage();					// change in number of players in the lobby, or removal of lobby
 		return true;
+	}
+	
+	public boolean startGame(User user)
+	{
+		Lobby lobby = user.getLobby();
+		if (lobby == null) 										return false;	// user not linked with any lobby		
+		if (!lobby.getOwnerName().equals(user.getUsername())) 	return false;	// this user is not the owner
+		if (!lobby.isStartable())								return false;	// not enough players
+		
+		runningLobbies.put(lobby.getID(), lobby);
+		listedLobbies.remove(lobby.getID());									// remove listing of lobby
+		setUpdateMessage();														// update to reflect removal of lobby
+		
+		lobby.startGame(user);
+		return true;
+	}
+	
+	public boolean move(User user, JsonObject message)
+	{
+		Lobby lobby = user.getLobby();
+		if (lobby == null) return false;	// user not linked with any lobby
+		
+		return lobby.move(user, message);
 	}
 	
 	public void sendUpdateMessage(User user) {
@@ -96,7 +120,7 @@ public class LobbyHandler
 	private void setUpdateMessage()
 	{
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
-		lobbies.forEach((k, lobby) -> {
+		listedLobbies.forEach((k, lobby) -> {
 			arrayBuilder.add(Json.createObjectBuilder()
 					.add("id", lobby.getID())
 					.add("name", lobby.getName())

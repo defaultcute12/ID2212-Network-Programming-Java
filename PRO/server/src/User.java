@@ -12,13 +12,13 @@ public class User
 	
 	private final int ID;
 	private final String username;
-	private int xp;
+	private int EXP;
 	
-	public User(int ID, String username, int xp)
+	public User(int ID, String username, int EXP)
 	{
 		this.ID = ID;
 		this.username = username;
-		this.xp = xp;
+		this.EXP = EXP;
 	}
 	
 	public void setSession(Session session) {
@@ -41,8 +41,16 @@ public class User
 		return username;
 	}
 	
-	public int getXp() {
-		return xp;
+	public int getEXP() {
+		return EXP;
+	}
+	
+	public boolean addEXP(int points)
+	{
+		if (points < 0) return false;
+		
+		EXP += points;
+		return true;
 	}
 	
 	public boolean send(JsonStructure message)
