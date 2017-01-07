@@ -1,8 +1,10 @@
+
+
 import javax.json.Json;
 import javax.json.JsonArray;
 import javax.json.JsonArrayBuilder;
 import javax.json.JsonObject;
-import javax.json.JsonValue;
+import javax.json.JsonObjectBuilder;
 
 
 public class TicTacToe implements Game
@@ -39,24 +41,23 @@ public class TicTacToe implements Game
 		
 		this.players = players;
 		
-		// TODO return JsonObject of game
-		return null;
+		return getState();
 	}
 	
 	@Override
-	public boolean removePlayer(User player)
+	public JsonObject removePlayer(User player)
 	{
 		int playerIndex = getPlayerIndex(player);
 		
-		if (playerIndex == -1)	return false;					// user not part of game
-		if (isOver)				return false;					// applyable
-
-		isOver = true;
+		if (playerIndex == -1)	return null;					// user not part of game
+		if (isOver)				return null;					// applyable
+		
+		isOver = true;											// if someone leaves the game is over
 		int wonPlayerIndex = (playerIndex + 1) % NUM_PLAYERS;
 		wonPlayer = players[wonPlayerIndex];					// non-leaver is winner
 		wonPlayer.addEXP(POINTS);
 		
-		return true;
+		return getState();
 	}
 	
 	@Override
@@ -75,7 +76,7 @@ public class TicTacToe implements Game
 	}
 	
 	@Override
-	public JsonObject getState()	// TODO finish this
+	public JsonObject getState()
 	{		
 		JsonArrayBuilder arrayBuilder = Json.createArrayBuilder();
 		for (int i = 0; i < grid.length; i++)
@@ -88,13 +89,14 @@ public class TicTacToe implements Game
 		}
 		JsonArray grid = arrayBuilder.build();
 		
-		JsonObject message = Json.createObjectBuilder()
-								.add("started", isStarted())
-								.add("ended", isOver())			// TODO add winner (if any!)
-								.add("grid", grid)
-								.build();
-		 
-		return message;
+		JsonObjectBuilder messageBuilder = Json.createObjectBuilder()
+												.add("started", isStarted())
+												.add("ended", isOver())
+												.add("grid", grid)
+												.add("turn", players[playerTurn].getUsername());
+		if (wonPlayer != null)	messageBuilder.add("winner", wonPlayer.getUsername());
+		
+		return messageBuilder.build();
 	}
 	
 	@Override
@@ -120,7 +122,7 @@ public class TicTacToe implements Game
 		else if (moveCounter++ == 9) isOver = true;			// tie
 		else setPlayerTurn();
 		
-		return move;										// return same object to be distributed
+		return move;										// return same movement to be distributed
 	}
 	
 	private int getPlayerIndex(User player)

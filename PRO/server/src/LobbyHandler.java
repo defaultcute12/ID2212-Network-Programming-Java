@@ -23,18 +23,19 @@ public class LobbyHandler
 	
 	public int newLobby(User user, JsonObject message)
 	{
-		if (user.getLobby() != null)						// user already tied to a lobby
+		if (user.getLobby() != null)							// user already tied to a lobby
 		{
 			sendProblemMessage(user, message.getString("action"), "occupied");
 			return -1;
 		}
 		
 		String lobbyName = message.getString("name");
-		Lobby newLobby = new Lobby(lobbyName, user, 2);		// TODO game-type
-		user.setLobby(newLobby);							// tie lobby to user
-		listedLobbies.put(newLobby.getID(), newLobby);		// store lobby
+		int gameType = message.getInt("type");
+		Lobby newLobby = new Lobby(lobbyName, user, gameType);
+		user.setLobby(newLobby);								// tie lobby to user
+		listedLobbies.put(newLobby.getID(), newLobby);			// store lobby
 		
-		setUpdateMessage();									// introduction of new lobby
+		setUpdateMessage();										// introduction of new lobby
 		return newLobby.getID();
 	}
 	

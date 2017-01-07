@@ -7,7 +7,7 @@ public interface Game
 	
 	public JsonObject setPlayers(User[] players);
 	
-	public boolean removePlayer(User player);
+	public JsonObject removePlayer(User player);
 	
 	public int getType();
 	

@@ -176,11 +176,14 @@ function refresh()
 
 function createLobby()
 {
-	var name = document.getElementById("addDeviceForm").elements["device_name"].value;
+	var form = document.getElementById("addDeviceForm");
+	var name = form.elements["lobby_name"].value;
+	var type = form.elements["game_type"].value;
 	
 	var CreateLobbyAction = {
 			action: "create",
 			name: name,
+			type: type,
 	};
 	socket.send(JSON.stringify(CreateLobbyAction));
 	

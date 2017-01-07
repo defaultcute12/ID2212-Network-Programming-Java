@@ -1,7 +1,6 @@
 
 
 import java.io.StringReader;
-
 import javax.enterprise.context.ApplicationScoped;
 import javax.inject.Inject;
 import javax.json.Json;

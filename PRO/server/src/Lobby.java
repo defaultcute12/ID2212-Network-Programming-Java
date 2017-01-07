@@ -57,11 +57,13 @@ public class Lobby
 	
 	public boolean startGame(User player)
 	{
-		if (!owner.equals(player))	return false;		// player lacks permission
+		if (!owner.equals(player))	return false;			// player lacks permission
 		if (!isStartable())			return false;
 		
-		game.setPlayers(players);						// initiate all the players
-		informPlayers(null);							// TODO have setPlayers return JsonObject
+		JsonObject gameChange = game.setPlayers(players);	// initiate all the players
+		
+		if (gameChange == null) return false;
+		informPlayers(gameChange);
 		return true;
 	}
 	
@@ -121,15 +123,17 @@ public class Lobby
 			{
 				shift = true;
 				players[i] = null;
-				if (i == 0) owner = players[i+1];	// next player (if any) promoted to owner
+				if (i == 0) owner = players[i+1];			// next player (if any) promoted to owner
 			}
 		}
 		
-		if (!shift) return false;					// found no player to be removed
+		if (!shift) return false;							// found no player to be removed
 		
-		game.removePlayer(player);					// remove player from game	TODO have it return JsonObject
 		noPlayers--;
-		informPlayers(null);
+		JsonObject gameChange = game.removePlayer(player);	// remove player from game
+		
+		if (gameChange == null) return false;
+		informPlayers(gameChange);
 		return true;
 	}
 	
@@ -139,8 +143,8 @@ public class Lobby
 		if (game == null) return false;						// assert game exists
 		
 		JsonObject gameChange = game.apply(player, message);
-		if (gameChange == null) return false;				// No state change
 		
+		if (gameChange == null) return false;
 		informPlayers(gameChange);
 		return true;
 	}
@@ -158,7 +162,7 @@ public class Lobby
 		}
 		JsonArray playerArray = arrayBuilder.build();
 		
-		// Update
+		// Message
 		JsonObjectBuilder messageBuilder = Json.createObjectBuilder()
 												.add("action", "lobby")
 												.add("status", "update")
